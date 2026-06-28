@@ -18,7 +18,9 @@ Thumbs.db
 # Debug logs
 npm-debug.log*
 skills-lock.json
-.claude/
 .agents/skills/
 .impeccable/
 database.db
+.claude/agents/
+.claude/skills/impeccable/
+.claude/settings.json
