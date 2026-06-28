@@ -2,6 +2,21 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ArticleCard from '../components/ArticleCard';
 
+function SkeletonCards() {
+  return (
+    <div className="home-grid" aria-hidden="true">
+      {[1, 2, 3].map((n) => (
+        <div key={n} className="skeleton-card">
+          <div className="skeleton skeleton-title" />
+          <div className="skeleton skeleton-date" />
+          <div className="skeleton skeleton-excerpt" />
+          <div className="skeleton skeleton-excerpt skeleton-excerpt--short" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +54,7 @@ export default function Home() {
         </p>
       </header>
 
-      {loading && <p className="loading">Loading posts…</p>}
+      {loading && <SkeletonCards />}
 
       {error && (
         <p className="home-error">Failed to load posts: {error}</p>

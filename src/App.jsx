@@ -7,11 +7,11 @@ import BlogPost from './pages/BlogPost';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 
-function Layout() {
+function Layout({ wide = false }) {
   return (
     <div className="app-layout">
       <Navbar />
-      <main className="app-main">
+      <main className={`app-main${wide ? ' app-main--wide' : ''}`}>
         <Outlet />
       </main>
       <Footer />
@@ -27,6 +27,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/login" element={<Login />} />
+        </Route>
+        <Route element={<Layout wide />}>
           <Route
             path="/admin"
             element={

@@ -2,11 +2,9 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="footer">
+    <footer className="footer" role="contentinfo">
       <div className="footer-inner">
-        <p className="footer-copy">
-          &copy; {year} Blog. All rights reserved.
-        </p>
+        <p className="footer-copy">&copy; {year} Blog</p>
         <div className="footer-links">
           <a
             href="https://github.com"

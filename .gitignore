@@ -21,3 +21,4 @@ skills-lock.json
 .claude/
 .agents/skills/
 .impeccable/
+database.db
