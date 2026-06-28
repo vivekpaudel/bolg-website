@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 function SkeletonPost() {
@@ -21,34 +21,41 @@ export default function BlogPost() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useRef(true);
 
-  useEffect(() => {
+  const fetchPost = useCallback(async () => {
     if (!supabase) {
-      setLoading(false);
-      setError('Supabase is not configured.');
+      if (mountedRef.current) {
+        setLoading(false);
+        setError('Supabase is not configured.');
+      }
       return;
     }
 
-    const fetchPost = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('slug', slug)
-        .single();
+    const { data, error: fetchError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('slug', slug)
+      .single();
 
-      if (fetchError) {
-        setError(fetchError.message);
-      } else {
-        setPost(data);
-      }
-      setLoading(false);
-    };
+    if (!mountedRef.current) return;
 
-    fetchPost();
+    if (fetchError) {
+      setError(fetchError.message);
+    } else {
+      setPost(data);
+    }
+    setLoading(false);
   }, [slug]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchPost();
+    return () => { mountedRef.current = false; };
+  }, [fetchPost]);
 
   if (loading) return <SkeletonPost />;
 
@@ -62,7 +69,12 @@ export default function BlogPost() {
           All posts
         </Link>
         <h1>Post not found</h1>
-        <p className="blog-post-error">{error}</p>
+        <div className="blog-post-error" role="alert" aria-live="polite">
+          <p>{error}</p>
+          <button className="post-retry-btn" onClick={fetchPost}>
+            Try again
+          </button>
+        </div>
       </article>
     );
   }

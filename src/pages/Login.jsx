@@ -47,15 +47,19 @@ export default function Login() {
         </p>
 
         {!configured && (
-          <p className="login-error">
+          <div className="login-error" role="alert" aria-live="polite">
             Supabase is not configured. Add your credentials to{' '}
             <code>.env.local</code> to enable login.
-          </p>
+          </div>
         )}
 
-        {error && <p className="login-error">{error}</p>}
+        {error && (
+          <div className="login-error" role="alert" aria-live="polite" id="login-error">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleLogin} className="login-form">
+        <form onSubmit={handleLogin} className="login-form" noValidate>
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -65,6 +69,9 @@ export default function Login() {
             placeholder="you@example.com"
             autoComplete="email"
             required
+            aria-required="true"
+            aria-invalid={!!error}
+            aria-describedby={error ? 'login-error' : undefined}
             disabled={!configured}
           />
 
@@ -78,6 +85,9 @@ export default function Login() {
               placeholder="••••••••"
               autoComplete="current-password"
               required
+              aria-required="true"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
               disabled={!configured}
             />
             <button

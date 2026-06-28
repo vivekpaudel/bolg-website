@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ArticleCard from '../components/ArticleCard';
 
@@ -21,29 +21,37 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useRef(true);
 
-  useEffect(() => {
+  const fetchPosts = useCallback(async () => {
     if (!supabase) {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
       return;
     }
 
-    const fetchPosts = async () => {
-      const { data, error: fetchError } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+    setLoading(true);
+    setError(null);
 
-      if (fetchError) {
-        setError(fetchError.message);
-      } else {
-        setPosts(data);
-      }
-      setLoading(false);
-    };
+    const { data, error: fetchError } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    fetchPosts();
+    if (!mountedRef.current) return;
+
+    if (fetchError) {
+      setError(fetchError.message);
+    } else {
+      setPosts(data);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchPosts();
+    return () => { mountedRef.current = false; };
+  }, [fetchPosts]);
 
   return (
     <section className="home">
@@ -57,7 +65,12 @@ export default function Home() {
       {loading && <SkeletonCards />}
 
       {error && (
-        <p className="home-error">Failed to load posts: {error}</p>
+        <div className="home-error" role="alert" aria-live="polite">
+          <p>Failed to load posts: {error}</p>
+          <button className="home-retry-btn" onClick={fetchPosts}>
+            Try again
+          </button>
+        </div>
       )}
 
       {!loading && !error && posts.length === 0 && (

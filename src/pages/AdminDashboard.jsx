@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const EMPTY_FORM = { title: '', slug: '', excerpt: '', content: '' };
@@ -17,21 +17,58 @@ export default function AdminDashboard() {
   // Delete confirmation
   const [deletingId, setDeletingId] = useState(null);
 
+  // Dialog ref
+  const dialogRef = useRef(null);
+  const mountedRef = useRef(true);
+  const closeInitiatedByRef = useRef(null); // tracks who initiated close
+
   // ── Fetch posts ──
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     const { data, error: fetchError } = await supabase
       .from('posts')
       .select('*')
       .order('created_at', { ascending: false });
 
+    if (!mountedRef.current) return;
+
     if (fetchError) setError(fetchError.message);
     else setPosts(data);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchPosts();
-  }, []);
+    return () => { mountedRef.current = false; };
+  }, [fetchPosts]);
+
+  // ── Open/close dialog ──
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (editing !== null && !dialog.open) {
+      dialog.showModal();
+    } else if (editing === null && dialog.open) {
+      closeInitiatedByRef.current = 'state';
+      dialog.close();
+    }
+  }, [editing]);
+
+  const handleDialogClose = () => {
+    // ESC or backdrop click closed the dialog — sync React state.
+    // Skip if we initiated the close to prevent a re-trigger loop.
+    if (closeInitiatedByRef.current === 'state') {
+      closeInitiatedByRef.current = null;
+      return;
+    }
+    closeInitiatedByRef.current = null;
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setFormError(null);
+  };
 
   // ── Slug generation from title ──
   const slugify = (str) =>
@@ -65,6 +102,11 @@ export default function AdminDashboard() {
     setEditing(null);
     setForm(EMPTY_FORM);
     setFormError(null);
+  };
+
+  const handleDialogClick = (e) => {
+    // Backdrop click: dialog element itself was clicked, not its content
+    if (e.target === dialogRef.current) closeForm();
   };
 
   const handleField = (e) => {
@@ -161,79 +203,104 @@ export default function AdminDashboard() {
         </button>
       </header>
 
-      {error && <p className="admin-error">{error}</p>}
-
-      {/* ── Post Form (create / edit) ── */}
-      {editing !== null && (
-        <div className="admin-form-overlay">
-          <form className="admin-form" onSubmit={handleSave}>
-            <h2>{editing?.id ? 'Edit Post' : 'New Post'}</h2>
-
-            {formError && <p className="admin-form-error">{formError}</p>}
-
-            <label htmlFor="post-title">Title</label>
-            <input
-              id="post-title"
-              name="title"
-              value={form.title}
-              onChange={handleField}
-              onBlur={handleTitleBlur}
-              placeholder="My awesome post"
-              required
-            />
-
-            <label htmlFor="post-slug">Slug</label>
-            <input
-              id="post-slug"
-              name="slug"
-              value={form.slug}
-              onChange={handleField}
-              placeholder="my-awesome-post"
-              required
-            />
-
-            <label htmlFor="post-excerpt">Excerpt</label>
-            <textarea
-              id="post-excerpt"
-              name="excerpt"
-              value={form.excerpt}
-              onChange={handleField}
-              rows={2}
-              placeholder="A short summary…"
-            />
-
-            <label htmlFor="post-content">Content</label>
-            <textarea
-              id="post-content"
-              name="content"
-              value={form.content}
-              onChange={handleField}
-              rows={10}
-              placeholder="Write your post here…"
-            />
-
-            <div className="admin-form-actions">
-              <button type="submit" className="admin-save-btn" disabled={saving}>
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-              <button type="button" className="admin-cancel-btn" onClick={closeForm}>
-                Cancel
-              </button>
-            </div>
-          </form>
+      {error && (
+        <div className="admin-error" role="alert" aria-live="polite">
+          <p>Failed to load posts: {error}</p>
+          <button className="admin-retry-btn" onClick={fetchPosts}>
+            Try again
+          </button>
         </div>
       )}
 
-      {/* ── Post List ── */}
-      {loading && <p className="loading">Loading posts…</p>}
+      {/* ── Post Form Dialog (create / edit) ── */}
+      <dialog
+        ref={dialogRef}
+        className="admin-form-dialog"
+        onClose={handleDialogClose}
+        onClick={handleDialogClick}
+        aria-labelledby="admin-form-heading"
+      >
+        <form className="admin-form" onSubmit={handleSave}>
+          <h2 id="admin-form-heading">{editing?.id ? 'Edit Post' : 'New Post'}</h2>
 
-      {!loading && posts.length === 0 && (
+          {formError && (
+            <div className="admin-form-error" role="alert" aria-live="polite">
+              {formError}
+            </div>
+          )}
+
+          <label htmlFor="post-title">Title</label>
+          <input
+            id="post-title"
+            name="title"
+            type="text"
+            value={form.title}
+            onChange={handleField}
+            onBlur={handleTitleBlur}
+            placeholder="My awesome post"
+            required
+            aria-required="true"
+            aria-invalid={!!formError}
+            aria-describedby={formError ? 'admin-form-error' : undefined}
+          />
+
+          <label htmlFor="post-slug">Slug</label>
+          <input
+            id="post-slug"
+            name="slug"
+            type="text"
+            value={form.slug}
+            onChange={handleField}
+            placeholder="my-awesome-post"
+            required
+            aria-required="true"
+            aria-invalid={!!formError}
+            aria-describedby={formError ? 'admin-form-error' : undefined}
+          />
+
+          <label htmlFor="post-excerpt">Excerpt</label>
+          <textarea
+            id="post-excerpt"
+            name="excerpt"
+            value={form.excerpt}
+            onChange={handleField}
+            rows={2}
+            placeholder="A short summary…"
+          />
+
+          <label htmlFor="post-content">Content</label>
+          <textarea
+            id="post-content"
+            name="content"
+            value={form.content}
+            onChange={handleField}
+            rows={10}
+            placeholder="Write your post here…"
+          />
+
+          {formError && <span id="admin-form-error" className="sr-only">{formError}</span>}
+
+          <div className="admin-form-actions">
+            <button type="submit" className="admin-save-btn" disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <button type="button" className="admin-cancel-btn" onClick={closeForm}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      {/* ── Post List ── */}
+      {loading && <p className="loading" aria-live="polite">Loading posts…</p>}
+
+      {!loading && !error && posts.length === 0 && (
         <div className="admin-empty">
           <p>No posts yet. Click "New Post" to get started.</p>
         </div>
       )}
 
-      {!loading && posts.length > 0 && (
+      {!loading && !error && posts.length > 0 && (
         <ul className="admin-list">
           {posts.map((post) => (
             <li key={post.id} className="admin-list-item">
@@ -250,12 +317,14 @@ export default function AdminDashboard() {
                     <button
                       className="admin-delete-yes"
                       onClick={() => handleDelete(post.id)}
+                      aria-label={`Confirm delete "${post.title}"`}
                     >
                       Yes
                     </button>
                     <button
                       className="admin-delete-no"
                       onClick={() => setDeletingId(null)}
+                      aria-label="Cancel delete"
                     >
                       No
                     </button>
@@ -265,12 +334,14 @@ export default function AdminDashboard() {
                     <button
                       className="admin-edit-btn"
                       onClick={() => openEdit(post)}
+                      aria-label={`Edit "${post.title}"`}
                     >
                       Edit
                     </button>
                     <button
                       className="admin-delete-btn"
                       onClick={() => setDeletingId(post.id)}
+                      aria-label={`Delete "${post.title}"`}
                     >
                       Delete
                     </button>

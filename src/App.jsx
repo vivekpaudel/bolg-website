@@ -10,8 +10,14 @@ import AdminDashboard from './pages/AdminDashboard';
 function Layout({ wide = false }) {
   return (
     <div className="app-layout">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <Navbar />
-      <main className={`app-main${wide ? ' app-main--wide' : ''}`}>
+      <main
+        id="main-content"
+        className={`app-main${wide ? ' app-main--wide' : ''}`}
+      >
         <Outlet />
       </main>
       <Footer />
