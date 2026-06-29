@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import RichTextEditor from '../components/RichTextEditor';
 
 const EMPTY_FORM = { title: '', slug: '', excerpt: '', content: '' };
 
@@ -202,14 +203,10 @@ export default function AdminDashboard() {
               placeholder="A short summary…"
             />
 
-            <label htmlFor="post-content">Content</label>
-            <textarea
-              id="post-content"
-              name="content"
+            <label>Content</label>
+            <RichTextEditor
               value={form.content}
-              onChange={handleField}
-              rows={10}
-              placeholder="Write your post here…"
+              onChange={(html) => setForm((prev) => ({ ...prev, content: html }))}
             />
 
             <div className="admin-form-actions">

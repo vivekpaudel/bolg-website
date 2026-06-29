@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabaseClient';
 
 function SkeletonPost() {
@@ -103,11 +104,24 @@ export default function BlogPost() {
         </time>
       </header>
 
-      <div className="blog-post-content">
-        {post.content?.split('\n').map((paragraph, i) => (
-          paragraph.trim() ? <p key={i}>{paragraph}</p> : null
-        ))}
-      </div>
+      <div
+        className="blog-post-content"
+        dangerouslySetInnerHTML={{
+          __html: DOMPurify.sanitize(
+            /<[a-z][\s\S]*>/i.test(post.content || '')
+              ? post.content || ''
+              : (post.content || '').split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join(''),
+            {
+              ALLOWED_TAGS: [
+                'h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li',
+                'blockquote', 'pre', 'code', 'img', 'br', 'hr',
+              ],
+              ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class'],
+              ALLOW_DATA_ATTR: false,
+            }
+          ),
+        }}
+      />
     </article>
   );
 }
