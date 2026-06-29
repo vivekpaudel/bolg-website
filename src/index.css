@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* ═══════════════════════════════════════════════════════════════
    Blog — Swiss Modernism 2.0 · Editorial Design System
    Playfair Display · Source Serif 4 · JetBrains Mono
@@ -490,6 +492,111 @@ a:hover {
   color: var(--color-destructive);
   font-size: var(--text-sm);
   padding: var(--sp-4) 0;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.pagination-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--color-secondary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.pagination-page:hover {
+  color: var(--color-foreground);
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+}
+
+.pagination-page.is-current {
+  color: var(--color-on-primary);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  cursor: default;
+}
+
+.pagination-page.is-current:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.pagination-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-1) var(--sp-3);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.pagination-arrow svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.pagination-arrow:hover:not(:disabled) {
+  color: var(--color-foreground);
+  border-color: var(--color-foreground);
+}
+
+.pagination-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .pagination {
+    gap: var(--sp-1);
+  }
+
+  .pagination-page {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pagination-arrow {
+    padding: var(--sp-1) var(--sp-2);
+    font-size: 0.625rem;
+  }
 }
 
 

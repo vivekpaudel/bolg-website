@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ArticleCard from '../components/ArticleCard';
 
+const POSTS_PER_PAGE = 7;
+
 function SkeletonCards() {
   return (
     <div className="home-grid" aria-hidden="true">
@@ -23,6 +25,12 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
+
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
@@ -30,21 +38,29 @@ export default function Home() {
     }
 
     const fetchPosts = async () => {
-      const { data, error: fetchError } = await supabase
+      setLoading(true);
+      setError(null);
+
+      const from = (currentPage - 1) * POSTS_PER_PAGE;
+      const to = currentPage * POSTS_PER_PAGE - 1;
+
+      const { data, count, error: fetchError } = await supabase
         .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (fetchError) {
         setError(fetchError.message);
       } else {
         setPosts(data);
+        setTotalCount(count);
       }
       setLoading(false);
     };
 
     fetchPosts();
-  }, []);
+  }, [currentPage]);
 
   const filteredPosts = useMemo(() => {
     if (!search.trim()) return posts;
@@ -55,6 +71,23 @@ export default function Home() {
         (excerpt && excerpt.toLowerCase().includes(q))
     );
   }, [posts, search]);
+
+  // Reset to page 1 when search changes (filters current page results)
+  // and disable pagination UI while searching
+  const isSearching = search.trim().length > 0;
+
+  // Generate visible page numbers (show at most 5 around current)
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 1) return [];
+    const pages = [];
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, currentPage + 2);
+    // Expand if we're near the edges
+    if (currentPage <= 3) end = Math.min(totalPages, 5);
+    if (currentPage > totalPages - 3) start = Math.max(1, totalPages - 4);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }, [currentPage, totalPages]);
 
   return (
     <section className="home">
@@ -101,7 +134,7 @@ export default function Home() {
 
       {!loading && !error && filteredPosts.length === 0 && (
         <p className="home-empty">
-          {search.trim()
+          {isSearching
             ? `No posts matching "${search.trim()}".`
             : 'No posts yet. Check back soon!'}
         </p>
@@ -119,6 +152,45 @@ export default function Home() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── Pagination ── */}
+      {!loading && !error && !isSearching && totalPages > 1 && (
+        <nav className="pagination" aria-label="Pagination">
+          <button
+            className="pagination-arrow"
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={currentPage === 1}
+            aria-label="Previous page"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+            Prev
+          </button>
+
+          <div className="pagination-pages">
+            {pageNumbers.map((page) => (
+              <button
+                key={page}
+                className={`pagination-page${page === currentPage ? ' is-current' : ''}`}
+                onClick={() => setCurrentPage(page)}
+                aria-label={`Page ${page}`}
+                aria-current={page === currentPage ? 'page' : undefined}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            className="pagination-arrow"
+            onClick={() => setCurrentPage((p) => p + 1)}
+            disabled={currentPage === totalPages}
+            aria-label="Next page"
+          >
+            Next
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+          </button>
+        </nav>
       )}
     </section>
   );
