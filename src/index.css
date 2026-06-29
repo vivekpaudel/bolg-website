@@ -89,8 +89,10 @@
 }
 
 /* ─── Dark Mode ─── */
+
+/* System preference (no manual override) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --color-primary: #fafafa;
     --color-on-primary: #09090b;
     --color-secondary: #a1a1aa;
@@ -106,6 +108,42 @@
     --color-surface: #18181b;
     --color-surface-raised: #1f1f23;
   }
+}
+
+/* Manual dark override */
+[data-theme="dark"] {
+  --color-primary: #fafafa;
+  --color-on-primary: #09090b;
+  --color-secondary: #a1a1aa;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-light: rgba(59, 130, 246, 0.1);
+  --color-background: #09090b;
+  --color-foreground: #fafafa;
+  --color-muted: #27272a;
+  --color-border: #27272a;
+  --color-destructive: #ef4444;
+  --color-ring: #d4d4d8;
+  --color-surface: #18181b;
+  --color-surface-raised: #1f1f23;
+}
+
+/* Manual light override (beats system dark if user chose light) */
+[data-theme="light"] {
+  --color-primary: #18181b;
+  --color-on-primary: #ffffff;
+  --color-secondary: #3f3f46;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-light: rgba(37, 99, 235, 0.08);
+  --color-background: #fafafa;
+  --color-foreground: #09090b;
+  --color-muted: #e8ecf0;
+  --color-border: #e4e4e7;
+  --color-destructive: #dc2626;
+  --color-ring: #18181b;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f4f4f5;
 }
 
 body {
@@ -278,6 +316,35 @@ a:hover {
 .nav-btn:hover {
   color: var(--color-foreground) !important;
   border-color: var(--color-foreground);
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-secondary);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-foreground);
+}
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
 }
 
 /* Hamburger (mobile) */
