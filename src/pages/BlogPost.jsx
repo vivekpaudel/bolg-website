@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabaseClient';
+import NotFound from './NotFound';
 
 function SkeletonPost() {
   return (
@@ -53,34 +54,8 @@ export default function BlogPost() {
 
   if (loading) return <SkeletonPost />;
 
-  if (error) {
-    return (
-      <article className="blog-post">
-        <Link to="/" className="blog-post-back">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          All posts
-        </Link>
-        <h1>Post not found</h1>
-        <p className="blog-post-error">{error}</p>
-      </article>
-    );
-  }
-
-  if (!post) {
-    return (
-      <article className="blog-post">
-        <Link to="/" className="blog-post-back">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          All posts
-        </Link>
-        <h1>Post not found</h1>
-        <p>No post exists at this URL.</p>
-      </article>
-    );
+  if (error || !post) {
+    return <NotFound />;
   }
 
   const formattedDate = new Date(post.created_at).toLocaleDateString('en-US', {
