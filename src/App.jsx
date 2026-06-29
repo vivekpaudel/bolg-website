@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import BlogPost from './pages/BlogPost';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import NotFound from './pages/NotFound';
 
 function Layout({ wide = false }) {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
         <Route element={<Layout wide />}>
           <Route
